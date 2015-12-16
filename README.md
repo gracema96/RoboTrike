@@ -1,2 +1,7 @@
 # RoboTrike
-Embedded software for the RoboTrike 
+
+This code is the embedded software for the RoboTrike system. 
+
+The RoboTrike is a three-wheeled robotic car that is controlled by an operator via a keypad and display over a serial interface. The system consists of two separate units that communicate over a serial interface using a defined protocol. There is a remote controller board that allows the user to interact with the system through a keypad and display that will tell the RoboTrike how to move. The user presses buttons on the keypad that each have some assigned function and the RoboTrike will respond accordingly. The RoboTrike can move in any direction at varying speeds and fire a laser (LED). The display consists of eight digits each consisting of 7 segments per digit. The display is used to display appropriate messages while the system is running about the status of the RoboTrike in response to the commands inputted. For example, if a speed key is pressed, the display will show the current RoboTrike speed. The command specifics of each key will be described in the Remote Main Loop. The display is also used to display error messages. The other board is a motor board and is connected to three DC motors that are used to move the RoboTrike through Pulse Width Modulation (PWM). There is also a stepper motor used to rotate the turret and a servomotor used to set the angle of elevation of the laser (unused). All of the motors are controlled through eleven bits of parallel output of an 8255. There is up to 32K bytes of RAM and 32K bytes of ROM available on the system. 
+
+Files necessary to run the RoboTrike are outlined in the Table of Contents. 
