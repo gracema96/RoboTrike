@@ -2,9 +2,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;                                                                            ;
 ;                                   RMTMAIN                                  ;
-;                             REMOTE BOARD Main Loop  			                 ;
-;                                   EE/CS 51				                         ;
-;				                            Yuan Ma				                           ;
+;                             REMOTE BOARD Main Loop  			     		 ;
+;                                   EE/CS 51				     			 ;
+;				    				Yuan Ma				     				 ;	
 ;                                                                            ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -64,15 +64,15 @@
 ;	user interface of the RoboTrike and report any errors that occur. 
 ;
 ; Table of Contents:
-;	RemoteMain:		            main loop for the RoboTrike remote board 
-;	ResetRemoteMain:	        resets all the components of the RoboTrike
-;				                    remote board main loop 
-;	KeypressHandler:	        handles different keypresses for the RoboTrike
-;				                    remote board 
-;	ReceiveSerialDataHandler:	handles data transmitted over the serial 
-;				                    channel for the RoboTrike remote board
-;	SerialErrorHandler:	      handles serial errors for the RoboTrike 
-;                           remote board
+;	RemoteMain:		  			main loop for the RoboTrike remote board 
+;	ResetRemoteMain:	  		resets all the components of the RoboTrike
+;				  				remote board main loop 
+;	KeypressHandler:	  		handles different keypresses for the RoboTrike
+;				  				remote board 
+;	ReceiveSerialDataHandler: 	handles data transmitted over the serial 
+;								channel for the RoboTrike remote board
+;	SerialErrorHandler:	  		handles serial errors for the RoboTrike 
+;                               remote board
 ;
 ; Tables:
 ; RemoteEventHandlerTable:  table of event handler functions 
@@ -81,9 +81,9 @@
 ; 
 ; Revision History:
 ;     11/30/15  Yuan Ma		wrote outline
-;     12/4/15	  Yuan Ma		wrote functions
-;     12/5/15	  Yuan Ma		wrote keypress handler and table 
-;     12/6/15   Yuan Ma   debugged code and updated comments 
+;     12/4/15	Yuan Ma		wrote functions
+;     12/5/15	Yuan Ma		wrote keypress handler and table 
+;     12/6/15   Yuan Ma   	debugged code and updated comments 
 ;
 
 
@@ -98,10 +98,10 @@ DGROUP  GROUP   STACK, DATA
 
 CODE	SEGMENT PUBLIC 'CODE'
 
-      ASSUME  CS:CGROUP, DS:DGROUP
+		ASSUME  CS:CGROUP, DS:DGROUP
 
-  ;functions needed to initialize the chip select, interrupts, event queue, 
-  ;keypad, display, serial, timer0, and a conversion function 
+  	;functions needed to initialize the chip select, interrupts, event queue, 
+  	;keypad, display, serial, timer0, and a conversion function 
 	;general functions 
 	EXTRN InitCS:NEAR
 	EXTRN ClrIRQVectors:NEAR 
@@ -133,8 +133,8 @@ CODE	SEGMENT PUBLIC 'CODE'
 ; RemoteMain   
 ;		
 ; Description:      This function is the main loop for the RoboTrike 
-;			              remote board. This function initializes the stack
-;			              pointer, data segment, chip select logic, and then calls
+;			        remote board. This function initializes the stack
+;			        pointer, data segment, chip select logic, and then calls
 ;                   another function to initialize the timer, interrupts, 
 ;                   display, keypad, serial, and eventqueue. The function 
 ;                   continuously loops and checks to make sure there are no 
@@ -440,7 +440,6 @@ SendKeypressOverSerial:
 	CALL	SerialPutString		    ;call function SerialPutString to store 
                                     ;the command in the TxQueue which will 
                                     ;be transmitted over the serial channel 
-    ;CALL    Display                 ;display command that is pressed on keypad 
     ;JMP    KeypressHandlerEnd      ;done handling the keypress 
     
 KeypressHandlerEnd: 
