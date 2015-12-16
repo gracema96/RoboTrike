@@ -64,20 +64,20 @@
 ;	user interface of the RoboTrike and report any errors that occur. 
 ;
 ; Table of Contents:
-;	RemoteMain:		  			main loop for the RoboTrike remote board 
-;	ResetRemoteMain:	  		resets all the components of the RoboTrike
-;				  				remote board main loop 
-;	KeypressHandler:	  		handles different keypresses for the RoboTrike
-;				  				remote board 
-;	ReceiveSerialDataHandler: 	handles data transmitted over the serial 
-;								channel for the RoboTrike remote board
-;	SerialErrorHandler:	  		handles serial errors for the RoboTrike 
-;                               remote board
+;	RemoteMain:		  main loop for the RoboTrike remote board 
+;	ResetRemoteMain:	  resets all the components of the RoboTrike
+;				  remote board main loop 
+;	KeypressHandler:	  handles different keypresses for the RoboTrike
+;				  remote board 
+;	ReceiveSerialDataHandler: handles data transmitted over the serial 
+;				  channel for the RoboTrike remote board
+;	SerialErrorHandler:	  handles serial errors for the RoboTrike 
+;                                 remote board
 ;
 ; Tables:
-; RemoteEventHandlerTable:  table of event handler functions 
-; KeypressCommandTable:     table of command to send over serial for 
-;                           each keypress 
+; RemoteEventHandlerTable:  	table of event handler functions 
+; KeypressCommandTable:     	table of command to send over serial for 
+;                           	each keypress 
 ; 
 ; Revision History:
 ;     11/30/15  Yuan Ma		wrote outline
@@ -98,7 +98,7 @@ DGROUP  GROUP   STACK, DATA
 
 CODE	SEGMENT PUBLIC 'CODE'
 
-		ASSUME  CS:CGROUP, DS:DGROUP
+	ASSUME  CS:CGROUP, DS:DGROUP
 
   	;functions needed to initialize the chip select, interrupts, event queue, 
   	;keypad, display, serial, timer0, and a conversion function 
@@ -126,47 +126,47 @@ CODE	SEGMENT PUBLIC 'CODE'
 	;int2 functions 
 	EXTRN InitINT2:NEAR
 	EXTRN InstallINT2Handler:NEAR 
-    ;converts functions 
-    EXTRN Hex2String:NEAR 
+    	;converts functions 
+    	EXTRN Hex2String:NEAR 
 
 
 ; RemoteMain   
 ;		
-; Description:      This function is the main loop for the RoboTrike 
-;			        remote board. This function initializes the stack
-;			        pointer, data segment, chip select logic, and then calls
-;                   another function to initialize the timer, interrupts, 
-;                   display, keypad, serial, and eventqueue. The function 
-;                   continuously loops and checks to make sure there are no 
-;                   critical errors (occurs when the EventQueue is full). If 
-;                   there is a critical error, the function will just reset 
-;                   everything. If there isn't a critical error, the function 
-;                   will dequeue events from the event queue while the event 
-;                   queue isn't empty. After determining the type of event 
-;                   that has been dequeued, the function will handle each type 
-;                   of event by calling the appropriate handler for the event. 
+; Description:      	This function is the main loop for the RoboTrike 
+;		    	remote board. This function initializes the stack
+;	 	    	pointer, data segment, chip select logic, and then calls
+;                   	another function to initialize the timer, interrupts, 
+;                   	display, keypad, serial, and eventqueue. The function 
+;                   	continuously loops and checks to make sure there are no 
+;                   	critical errors (occurs when the EventQueue is full). If 
+;                   	there is a critical error, the function will just reset 
+;                   	everything. If there isn't a critical error, the function 
+;                   	will dequeue events from the event queue while the event 
+;                   	queue isn't empty. After determining the type of event 
+;                   	that has been dequeued, the function will handle each type 
+;                   	of event by calling the appropriate handler for the event. 
 ;
 ; Operation:		This function will first initialize the stack pointer
-;			        and data segment, chip select and then call function 
-;                   ResetRemoteMain in order to inialize all other 
-;                   necessary functions. The function will loop continuously
-;                   and check if there is a critical error. If there is a 
-;                   critical error, the function will reset before looping again. 
-;                   If there isn't a critical error, the function will check if 
-;                   the EventQueue is empty and dequeue an event if it isn't 
-;                   empty. If the EventQueue is empty, the function will just 
-;                   start looping again. After dequeueing an event, the funciton 
-;                   will check to see if it is a KEY_EVENT (a key has been pressed), 
-;                   RX_EVENT (serial data has been received), or ERROR_EVENT 
-;                   (there was some sort of serial error). If the data dequeued 
-;                   is none of these, the function will start looping again. After
-;                   determining the appropriate event, the function will use 
-;                   a table to call the appropriate event handler and deal 
-;                   with the event. 
+;		    	and data segment, chip select and then call function 
+;                   	ResetRemoteMain in order to inialize all other 
+;               	necessary functions. The function will loop continuously
+;                   	and check if there is a critical error. If there is a 
+;                   	critical error, the function will reset before looping again. 
+;                   	If there isn't a critical error, the function will check if 
+;                   	the EventQueue is empty and dequeue an event if it isn't 
+;                   	empty. If the EventQueue is empty, the function will just 
+;               	start looping again. After dequeueing an event, the funciton 
+;                   	will check to see if it is a KEY_EVENT (a key has been pressed), 
+;                   	RX_EVENT (serial data has been received), or ERROR_EVENT 
+;                   	(there was some sort of serial error). If the data dequeued 
+;                   	is none of these, the function will start looping again. After
+;                   	determining the appropriate event, the function will use 
+;                   	a table to call the appropriate event handler and deal 
+;                   	with the event. 
 ;
-; Input:		    A 4x4 keypad array and the serial channel 
+; Input:		A 4x4 keypad array and the serial channel 
 ;
-; Output:		    Serial channel and LED display 
+; Output:		Serial channel and LED display 
 ;
 ; Error Handling:	If a critical error occurs, the main loop is reset.  	
 ;
@@ -184,15 +184,15 @@ START:
 
 
 MAIN: 
-	MOV	    AX, DGROUP		    ;initialize the stack pointer 
-	MOV	    SS, AX
-	MOV	    SP, OFFSET(DGROUP:TopOfStack)
+	MOV	AX, DGROUP		    ;initialize the stack pointer 
+	MOV	SS, AX
+	MOV	SP, OFFSET(DGROUP:TopOfStack)
 
-	MOV	    AX, DGROUP		    ;initialize data segment 
-	MOV	    DS, AX 
+	MOV	AX, DGROUP		    ;initialize data segment 
+	MOV	DS, AX 
 
 	CALL	InitCS			    ;initialize the 80188 chip selects
-                                ;assume LCS and UCS already set up 
+                                	;assume LCS and UCS already set up 
 	CALL	ClrIRQVectors		;clear (initialize) interrupt vector table 
 	CALL	ResetRemoteMain		;call function to initialize the rest of 
                                 ;the necessary functions 
