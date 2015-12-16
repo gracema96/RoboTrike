@@ -7,7 +7,7 @@ asm86 int2.asm m1 ep db
 asm86 timer1.asm m1 ep db
 asm86 serial.asm m1 ep db  
 asm86 converts.asm m1 ep db
-asm86 motors.asm m1 ep db 
+asm86 motors.asm m1 ep db  
 asm86 parinit.asm m1 ep db 
 asm86 trigtbl.asm m1 ep db
 asm86 parser.asm m1 ep db
