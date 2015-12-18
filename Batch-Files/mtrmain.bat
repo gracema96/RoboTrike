@@ -17,4 +17,3 @@ link86 serial.obj, converts.obj, motors.obj, parinit.obj, trigtbl.obj, parser.ob
 link86 temp.lnk, orary.lnk TO mtrmain.lnk
 loc86 mtrmain.lnk TO mtrmain NOIC AD(SM(CODE(4000h), data(400h), stack(7000h)))
 
-
