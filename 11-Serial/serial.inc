@@ -4,7 +4,6 @@
 ;                          Include for Serial Functions                      ;
 ;                                   EE/CS 51				     ;  
 ;				    Yuan Ma				     ;
-;			       TA: Jennifer Lin			             ;
 ;                                                                            ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
