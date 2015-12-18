@@ -286,120 +286,119 @@ SetMotorSpeed       	PROC        NEAR
                         PUBLIC      SetMotorSpeed
 
 	
-    PUSHA               ;save all the registers 
+    	PUSHA               		;save all the registers 
     
 CheckSpeed:
-	CMP	    AX, IGNORE_SPEED	;check if we should ignore the speed 
-	JE		CheckAngle	        ;if it is the ignore speed, we ignore 
-                                ;and move on to checking the angle
+	CMP=	AX, IGNORE_SPEED	;check if we should ignore the speed 
+	JE	CheckAngle	        ;if it is the ignore speed, we ignore 
+                                	;and move on to checking the angle
 	;JNE	SetNewSpeed	        ;it it is not the ignore speed, we will 
-                                ;set the new speed as the passed in speed  
+                                	;set the new speed as the passed in speed  
 
 SetNewSpeed:
-	MOV	    MotorSpeed, AX		;set the speed to be the passed in speed
-	;JMP	CheckAngle		    ;now we need to check the angle 
+	MOV	MotorSpeed, AX		;set the speed to be the passed in speed
+	;JMP	CheckAngle		;now we need to check the angle 
 
 CheckAngle:
-	CMP	    BX, IGNORE_ANGLE	;check if we should ignore the angle
-	JE	    CalcSpeedsInit	    ;if it the ignore angle, we ignore and move on 
-                                ;to start calculating the speed 
-	;JNE	SetNewAngle		    ;if it is not the ignore angle, we will 
-                                ;we need to set the new angle  
+	CM	BX, IGNORE_ANGLE	;check if we should ignore the angle
+	JE	CalcSpeedsInit	    	;if it the ignore angle, we ignore and move on 
+                                	;to start calculating the speed 
+	;JNE	SetNewAngle		;if it is not the ignore angle, we will 
+                                	;we need to set the new angle  
 
 SetNewAngle:
-	MOV	    AX, BX              ;move the angle into AX so we can convert it
-                                ;into a signed double word 
-	CWD				            ;convert the angle into a signed double
-                                ;word, now half of it is in DX
-	MOV	    BX, MAX_ANGLE		;we need to make sure the angle is between
-                                ;the MIN_ANGLE and MAX_ANGLE
-	IDIV	BX			        ;Divide by the maximum angle, the remainder 
-                                ;(what we want: angle = angle mod MAX_ANGLE)
-                                ;is now in DX for double word division 
-	CMP	    DX, 0 		        ;check if angle is negative or not 				
-	JGE	    SetNewAngleDone		;if the angle is positive, we are done
-                                ;and can set it to be MotorAngle
-	;JL	    CorrectNegAngle		;if the angle is negative, we need to add
-                                ;MAX_ANGLE to make sure it is within the range
+	MOV	AX, BX              	;move the angle into AX so we can convert it
+                                	;into a signed double word 
+	CWD				;convert the angle into a signed double
+                                	;word, now half of it is in DX
+	MO	BX, MAX_ANGLE		;we need to make sure the angle is between
+                                	;the MIN_ANGLE and MAX_ANGLE
+	IDIV	BX			;Divide by the maximum angle, the remainder 
+                                	;(what we want: angle = angle mod MAX_ANGLE)
+                                	;is now in DX for double word division 
+	CMP	DX, 0 			;check if angle is negative or not 				
+	JGE	SetNewAngleDone		;if the angle is positive, we are done
+                                	;and can set it to be MotorAngle
+	;JL	CorrectNegAngle		;if the angle is negative, we need to add
+                                	;MAX_ANGLE to make sure it is within the range
 					
 CorrectNegAngle:
-	ADD	    DX, MAX_ANGLE		;adding MAX_ANGLE will give us the same 
-                                ;angle, but positive 
+	ADD	DX, MAX_ANGLE		;adding MAX_ANGLE will give us the same 
+                                	;angle, but positive 
 	;JMP	SetNewAngleDone
 
 SetNewAngleDone:
-	MOV	    MotorAngle, DX 		;set the new angle to be MotorAngle 
+	MOV	MotorAngle, DX 		;set the new angle to be MotorAngle 
 	;JMP	CalcSpeedsInit		;now that we have the correct angle and
-                                ;speed we can calculate a speed 
+                                	;speed we can calculate a speed 
 CalcSpeedsInit:
-	MOV	    BX, MotorAngle      ;move the MotorAngle into BX for calculations 
-	ADD	    BX, BX				;shift the angle because the sine/cosine 
-                                ;values are words 
-	MOV	    DI, FIRST_MOTOR		;begin looping from the first motor  
+	MOV	BX, MotorAngle      	;move the MotorAngle into BX for calculations 
+	ADD	BX, BX			;shift the angle because the sine/cosine 
+                                	;values are words 
+	MOV	DI, FIRST_MOTOR		;begin looping from the first motor  
 	;JMP	CalcSpeedsLoop
 
 CalcSpeedsLoop:
-	CMP 	DI, NUM_MOTORS	    ;check if we have looped through all 
-                                ;of the motors
-	JAE	    SetSpeedDone		;if we have, then we are done adding pulses 
-	;JL	    CalcSpeed		    ;if not, we need to calculate another
-                                ;motor speed
+	CMP 	DI, NUM_MOTORS	    	;check if we have looped through all 
+                                	;of the motors
+	JAE	SetSpeedDone		;if we have, then we are done adding pulses 
+	;JL	CalcSpeed		;if not, we need to calculate another
+                                	;motor speed
 CalcSpeed:  
-	PUSH	BX			        ;save angle for next loop calculation
-    PUSH    DI                  ;save the motor index 
-    MOV	    AX, MotorSpeed      ;move the MotorAngle into AX for calculations 
-	SHR	    AX, SHIFT_BIT 		;divide the speed by to remove the sign bit 
-    PUSH    AX                  ;save the speed for when we calculate the 
-                                ;y-direction 
-	SAL	    DI, SHIFT_BIT 	    ;shift the motor index because the 
-                                ;force tables are indexed as words 
+	PUSH	BX			;save angle for next loop calculation
+    	PUSH    DI                  	;save the motor index 
+	MOV	AX, MotorSpeed      	;move the MotorAngle into AX for calculations 
+	SHR	AX, SHIFT_BIT 		;divide the speed by to remove the sign bit 
+    	PUSH    AX                  	;save the speed for when we calculate the 
+                                	;y-direction 
+	SAL	DI, SHIFT_BIT 	    	;shift the motor index because the 
+                                	;force tables are indexed as words 
 
 	;calculate the everything in the x-direction
-	IMUL	WORD PTR CS:ForceX_Table[DI] 	;We multiply the ForceX vector by 
-                                            ;the speed (F_x * v) 
-	MOV	    AX, DX 			                ;truncate to DX and store in AX 
-	IMUL	WORD PTR CS:Cos_Table[BX] 	    ;Multiply by cosine of the angle 
-                                            ;(F_x * v * cos(angle))
-	MOV	    CX, DX			                ;truncate to DX and store in CX
-    POP     AX                              ;restore the speed for the 
-                                            ;y-direction calculations 
+	IMUL	WORD PTR CS:ForceX_Table[DI] ;We multiply the ForceX vector by 
+                                             ;the speed (F_x * v) 
+	MOV	AX, DX 		     	;truncate to DX and store in AX 
+	IMUL	WORD PTR CS:Cos_Table[BX] ;Multiply by cosine of the angle 
+                                          ;(F_x * v * cos(angle))
+	MOV	CX, DX			                ;truncate to DX and store in CX
+	POP     AX                      ;restore the speed for the 
+                                        ;y-direction calculations 
  
 	;calculate everything in the y-direction 
-	IMUL	WORD PTR CS:ForceY_Table[DI]	    ;We multiply the ForceY vector 
-                                                ;by the speed (F_y * v)
-	MOV	    AX, DX			                    ;truncate to DX 
-	IMUL	WORD PTR CS:Sin_Table[BX] 	        ;Multiply by sine of the angle
-                                                ;(F_y * v * sin(angle))
+	IMUL	WORD PTR CS:ForceY_Table[DI] ;We multiply the ForceY vector 
+                                             ;by the speed (F_y * v)
+	MOV	AX, DX			;truncate to DX 
+	IMUL	WORD PTR CS:Sin_Table[BX] ;Multiply by sine of the angle
+                                          ;(F_y * v * sin(angle))
 	;add x and y parts 
-	ADD	    CX, DX 			        ;we add the x and y parts together to
-                                    ;complete the calculation:
-                                ;(F_x * v * cos(angle)) + (F_y * v * sin(angle))
-	SAL	    CX, EXTRA_SIGN_BITS     ;get rid of extra sign bits since 
-                                    ;multiplying three Q(0.15) numbers gives us
-                                    ;extra sign bits, but we only need one 
-	POP 	DI			            ;restore motor counter 
-	POP 	BX			            ;restore angle 
-	MOV	    BYTE PTR PulseWidths[DI], CH	    ;truncate the value we 
+	ADD	CX, DX 			;we add the x and y parts together to
+                                 	;complete the calculation:
+                                	;(F_x * v * cos(angle)) + (F_y * v * sin(angle))
+	SAL	CX, EXTRA_SIGN_BITS     ;get rid of extra sign bits since 
+                                    	;multiplying three Q(0.15) numbers gives us
+                                	;extra sign bits, but we only need one 
+	POP 	DI			;restore motor counter 
+	POP 	BX			;restore angle 
+	MOV	BYTE PTR PulseWidths[DI], CH	;truncate the value we 
                                                 ;calculated to CH and add it to 
                                                 ;the PulseWidths list                                                     
-    INC     DI                       			;increment to the next motor 
-	JMP	    CalcSpeedsLoop		                ;loop back up 		
+    	INC     DI                       ;increment to the next motor 
+	JMP	CalcSpeedsLoop		 ;loop back up 		
 
 SetSpeedDone:
-    POPA                            ;restore all registers 
+    	POPA                            ;restore all registers 
 	RET				
 
 SetMotorSpeed		ENDP
 
 
 
-
 ; GetMotorSpeed
 ;
 ; Description:		This function returns the current speed setting for
-;			        the RoboTrike in AX which must be between MIN_SPEED and 
-;		        	MAX_SPEED, inclusively. The MIN_SPEED represents 
-;			        when the RoboTrike is stopped.   		      
+;			the RoboTrike in AX which must be between MIN_SPEED and 
+;		        MAX_SPEED, inclusively. The MIN_SPEED represents 
+;			when the RoboTrike is stopped.   		      
 ;
 ; Operation:		The function returns the shared variable MotorSpeed to AX.   
 ;
@@ -413,9 +412,9 @@ SetMotorSpeed		ENDP
 ;
 ; Global Variables:	None
 ;
-; Input:		    None 
+; Input:		None 
 ;
-; Output:		    None
+; Output:		None
 ;
 ; Error Handling:	None
 ;
@@ -423,13 +422,12 @@ SetMotorSpeed		ENDP
 ;
 ; Data Structures:	None 
 ;
-; Registers Changed: AX
+; Registers Changed:    AX
 ;
 ; Limitations:		None
 ;
 ; Author: Yuan Ma
 ; Last Modified: 11/13/15
-;
 ;
 
 GetMotorSpeed   PROC        NEAR
@@ -438,7 +436,6 @@ GetMotorSpeed   PROC        NEAR
 	MOV     AX, MotorSpeed	;return value of the stored RoboTrike speed in AX
  	RET
 
-
 GetMotorSpeed	ENDP
 
 
@@ -446,19 +443,19 @@ GetMotorSpeed	ENDP
 ; GetMotorDirection 
 ;
 ; Description:		This function returns the current direction of 
-;			        movement setting for the RoboTrike in AX which 
-;			        must be between MIN_ANGLE and MAX_ANGLE inclusively. 
-;			        The direction is expressed as angle in degrees. An 
-;			        angle of MIN_ANGLE represents straight ahead
-;			        relative to the RoboTrike orientation and angles
-;			        are measured clockwise.   		      
+;			movement setting for the RoboTrike in AX which 
+;			must be between MIN_ANGLE and MAX_ANGLE inclusively. 
+;			The direction is expressed as angle in degrees. An 
+;			angle of MIN_ANGLE represents straight ahead
+;			relative to the RoboTrike orientation and angles
+;			are measured clockwise.   		      
 ;
 ; Operation:		The function returns the shared variable MotorAngle to AX 
 ;
 ; Arguments:		None 
 ;
 ; Return Value:		AX - current direction of movement setting for the 
-;			             RoboTrike 
+;			     RoboTrike 
 ;
 ; Local Variables:	None
 ;
@@ -466,9 +463,9 @@ GetMotorSpeed	ENDP
 ;
 ; Global Variables:	None
 ;
-; Input:		    None 
+; Input:		None 
 ;
-; Output:		    None
+; Output:		None
 ;
 ; Error Handling:	None
 ;
@@ -476,7 +473,7 @@ GetMotorSpeed	ENDP
 ;
 ; Data Structures:	None 
 ;
-; Registers Changed: AX
+; Registers Changed:    AX
 ;
 ; Limitations:		None 
 ;
@@ -490,8 +487,6 @@ GetMotorDirection   	PROC        NEAR
 
 	MOV	    AX, MotorAngle 	;return value of the stored RoboTrike direction in AX 
  	RET
- 
-
 
 GetMotorDirection	ENDP
 
@@ -499,15 +494,15 @@ GetMotorDirection	ENDP
 ; SetLaser
 ;
 ; Description:		This function turns the laser on or off depending
-;			        on the passed in value (onoff) in AX. A zero value
-;			        turns the laser off and a nonzero value turns the laser on.    		      
+;			on the passed in value (onoff) in AX. A zero value
+;			turns the laser off and a nonzero value turns the laser on.    		      
 ;
 ; Operation:		The function sets LaserStatus to be the passed in 
-;			        value AX. Later, the PWMEventHandler will actually
-;			        check if the value is nonzero or not and set the laser. 
+;			value AX. Later, the PWMEventHandler will actually
+;			check if the value is nonzero or not and set the laser. 
 ;
 ; Arguments:		onoff(AX) - if zero, the laser is turned off; if 
-;				                nonzero, the laser is turned on  
+;				    nonzero, the laser is turned on  
 ;
 ; Return Value:		None
 ;
@@ -517,9 +512,9 @@ GetMotorDirection	ENDP
 ;
 ; Global Variables:	None
 ;
-; Input:		    None 
+; Input:		None 
 ;
-; Output:		    None
+; Output:		None
 ;
 ; Error Handling:	None
 ;
@@ -527,7 +522,7 @@ GetMotorDirection	ENDP
 ;
 ; Data Structures:	None 
 ;
-; Registers Changed: AX
+; Registers Changed:    AX
 ;
 ; Limitations:		None 	
 ;
@@ -538,11 +533,10 @@ GetMotorDirection	ENDP
 SetLaser   	PROC        NEAR
            	PUBLIC      SetLaser
 
-	MOV	    LaserStatus, AX		;writes the passed in value to LaserStatus.
-                                ;This value will be checked and the laser 
-                                ;will be set in the PWMEventHandler 
+	MOV	    LaserStatus, AX	;writes the passed in value to LaserStatus.
+                                	;This value will be checked and the laser 
+                                	;will be set in the PWMEventHandler 
 	RET
-
 
 SetLaser	ENDP
 
@@ -551,8 +545,8 @@ SetLaser	ENDP
 ; GetLaser
 ;
 ; Description:		This function returns the status of the RoboTrike 
-;			        laser in AX. A zero value indicates the laser is 
-;			        off and a non-zero value indicates the laser is on.      
+;			laser in AX. A zero value indicates the laser is 
+;			off and a non-zero value indicates the laser is on.      
 ;
 ; Operation:		The function returns the shared variable LaserStatus to AX
 ;
@@ -566,9 +560,9 @@ SetLaser	ENDP
 ;
 ; Global Variables:	None
 ;
-; Input:		    None 
+; Input:		None 
 ;
-; Output:		    None
+; Output:		None
 ;
 ; Error Handling:	None
 ;
@@ -576,7 +570,7 @@ SetLaser	ENDP
 ;
 ; Data Structures:	None 
 ;
-; Registers Changed: AX
+; Registers Changed:    AX
 ;
 ; Limitations:		None 
 ;
@@ -584,27 +578,27 @@ SetLaser	ENDP
 ; Last Modified: 11/13/15
 ;
 
-GetLaser  	PROC        NEAR
+GetLaser    PROC        NEAR
             PUBLIC      GetLaser
 
 
 	MOV	    AX, LaserStatus 	;return value of stored laser status in AX 
  	RET 
 
-
 GetLaser	ENDP
 
-; SetTurretAngle 
 
+; SetTurretAngle 
 SetTurretAngle  PROC    NEAR
                 PUBLIC  SetTurretAngle 
                 
     RET
-
+    
 SetTurretAngle  ENDP 
 
-; SetRelTurretAngle 
 
+
+; SetRelTurretAngle 
 SetRelTurretAngle   PROC    NEAR
                     PUBLIC  SetRelTurretAngle 
                     
@@ -612,8 +606,9 @@ SetRelTurretAngle   PROC    NEAR
 
 SetRelTurretAngle   ENDP
 
-; SetTurretElevation 
 
+
+; SetTurretElevation 
 SetTurretElevation  PROC    NEAR
                     PUBLIC  SetTurretElevation 
 
@@ -626,32 +621,32 @@ SetTurretElevation  ENDP
 ; PWMEventHandler 
 ;
 ; Description:		This function uses pulse width modulation on the 
-;			        motors when called by the timer event handler and 
-;			        turns the laser on or off. Previously, we calculated
-;                   a pulse width in SetMotorSpeed which determines how
-;                   long we want to turn the motor on for. In this event
-;                   handler, we will check if the counter has reached this 
-;                   pulse width so we can turn the motor on for this specified
-;                   amount of time out of (MAX_PULSE). The duty cycle can 
-;                   be found by dividing the pulse width by (MAX_PULSE)
-;                   An interrupt is generated once every (PWMCYCLETIME / 
-;                   SEVEN_BIT_RES) milliseconds. It will use Timer1, a different  
-;                   timer than the one used for multiplexing and keypad scanning. 
+;			motors when called by the timer event handler and 
+;			turns the laser on or off. Previously, we calculated
+;                   	a pulse width in SetMotorSpeed which determines how
+;                   	long we want to turn the motor on for. In this event
+;                   	handler, we will check if the counter has reached this 
+;                   	pulse width so we can turn the motor on for this specified
+;               	amount of time out of (MAX_PULSE). The duty cycle can 
+;                   	be found by dividing the pulse width by (MAX_PULSE)
+;                   	An interrupt is generated once every (PWMCYCLETIME / 
+;                   	SEVEN_BIT_RES) milliseconds. It will use Timer1, a different  
+;                   	timer than the one used for multiplexing and keypad scanning. 
 ;
 ; Operation:		The function will check the PulseWidthCounter to see
-;                   if we have reached the end of the count. If so, 
-;                   we need to reset the counter and turn all the motors 
-;                   off; if not we will begin to loop through the motors 
-;                   to see if they need to be turned on. The function will 
-;                   obtain the pulse width of each motor from PulseWidths
-;                   list and check if it is negative or positive so the 
-;                   direction of the motor can be set. Then, it will check
-;                   if the PulseWidthCounter is equal to the pulse width.
-;                   If it is equal, the motor will be turned on and if 
-;                   if it not equal, the function will loop to check the 
-;                   next motor. The LaserStatus is also checked and the 
-;                   laser is set to be on/off. The final bits that are 
-;                   set will be outputted to Port B.   
+;                   	if we have reached the end of the count. If so, 
+;                   	we need to reset the counter and turn all the motors 
+;                   	off; if not we will begin to loop through the motors 
+;                   	to see if they need to be turned on. The function will 
+;                   	obtain the pulse width of each motor from PulseWidths
+;                   	list and check if it is negative or positive so the 
+;                   	direction of the motor can be set. Then, it will check
+;                   	if the PulseWidthCounter is equal to the pulse width.
+;                   	If it is equal, the motor will be turned on and if 
+;                   	if it not equal, the function will loop to check the 
+;                   	next motor. The LaserStatus is also checked and the 
+;                   	laser is set to be on/off. The final bits that are 
+;                   	set will be outputted to Port B.   
 ;
 ; Arguments:		None 
 ;
@@ -660,19 +655,19 @@ SetTurretElevation  ENDP
 ; Local Variables:	None
 ;
 ; Shared Variables:	PulseWidthCounter - counter for the pulse width 
-;					                    (read from/written)
-;			        PulseWidths[] - list of pulse widths for each motor
-;					                (read from) 
-;			        LaserStatus - indicated whether the laser is turned
-;                                 on or off (read from) 
+;					    (read from/written)
+;			PulseWidths[] - list of pulse widths for each motor
+;					(read from) 
+;			LaserStatus - indicated whether the laser is turned
+;                                     on or off (read from) 
 ;
 ;
 ; Global Variables:	None 
 ;
-; Input:		    None
+; Input:		None
 ;
-; Output:		    Bits are set to parallel port B which turn the motors
-;                   on/off and the laser on/off  
+; Output:		Bits are set to parallel port B which turn the motors
+;                   	on/off and the laser on/off  
 ;
 ; Error Handling:	None 
 ;
@@ -680,7 +675,7 @@ SetTurretElevation  ENDP
 ;
 ; Data Structures: 	None 
 ;
-; Registers Changed: None 
+; Registers Changed:    None 
 ;
 ; Limitations:		None 	  	
 ;
@@ -691,97 +686,95 @@ SetTurretElevation  ENDP
 PWMEventHandler       PROC        NEAR
                       PUBLIC      PWMEventHandler
 
-	
-
 	PUSHA					;push all registers 
 
 CheckPWCounter:
-	CMP	    PulseWidthCounter, PW_COUNTER_END     ;check if PulseWidthCounter
+	CMP	PulseWidthCounter, PW_COUNTER_END ;check if PulseWidthCounter
                                                   ;has counted down to the end
-	JNE	    UpdateCounterLoopInit                 ;if it hasn't, we check if 
-                                                  ;the motors need to be turned
-                                                  ;on 
-	;JE	    ResetCounter                          ;if it is, reset the counter   
+	JNE	UpdateCounterLoopInit           ;if it hasn't, we check if 
+                                                ;the motors need to be turned
+                                                ;on 
+	;JE	ResetCounter                    ;if it is, reset the counter   
     
 ResetCounter:
-	MOV	    PulseWidthCounter, MAX_PULSE        ;reset PulseWidthCounter to 
+	MOV	PulseWidthCounter, MAX_PULSE    ;reset PulseWidthCounter to 
                                                 ;start counting down from the
                                                 ;MAX_PULSE
-	AND	    PortBValue, MOTORS_OFF              ;turn all the motors off
-	JMP	    CheckLaser                          ;move on to checking the laser 
+	AND	PortBValue, MOTORS_OFF          ;turn all the motors off
+	JMP	CheckLaser                      ;move on to checking the laser 
 
 UpdateCounterLoopInit:
-	MOV	    BX, FIRST_MOTOR                 ;start looping from first motor
-    ;JMP    GetPulseWidth
+	MOV	BX, FIRST_MOTOR                 ;start looping from first motor
+	;JMP    GetPulseWidth
     
 GetPulseWidth:                              
-	MOV	    AL, BYTE PTR PulseWidths[BX]	;obtain the pulse width for the 
-                                            ;corresponding motor from the 
-                                            ;PulseWidths list 
+	MOV	AL, BYTE PTR PulseWidths[BX]	;obtain the pulse width for the 
+                                            	;corresponding motor from the 
+                                            	;PulseWidths list 
 	;JMP	MotorDirectionCheck             ;check the pulse width direction 
 
 MotorDirectionCheck:      
-    CMP     AL, 0                           ;check if the pulse width is negative 
-    JGE     SetForwardDirection             ;if position, set the direction to 
-                                            ;be forward 
-    ;JL     SetBackwardDirection            ;if negative, set the direction to 
-                                            ;be backward 
+    	CMP     AL, 0                           ;check if the pulse width is negative 
+    	JGE     SetForwardDirection             ;if position, set the direction to 
+                                            	;be forward 
+    	;JL     SetBackwardDirection            ;if negative, set the direction to 
+                                        	;be backward 
 
 SetBackwardDirection:
-    MOV     DL, BACKWARD_DIRECTION          ;set direction to be backward
-    NEG     AL                              ;take absolute value of pulse width 
-    JMP     CheckMotor                      ;move on to checking the motors 
-                                            ;note: Reverse 100% won't work 
+    	MOV     DL, BACKWARD_DIRECTION          ;set direction to be backward
+    	NEG     AL                              ;take absolute value of pulse width 
+    	JMP     CheckMotor                      ;move on to checking the motors 
+                                            	;note: Reverse 100% won't work 
     
 SetForwardDirection:    
-    MOV     DL, FORWARD_DIRECTION           ;set direction to be forward 
-    ;JMP    CheckMotor                      ;move on to checking the motors 
+    	MOV     DL, FORWARD_DIRECTION           ;set direction to be forward 
+    	;JMP    CheckMotor                      ;move on to checking the motors 
     
 CheckMotor:
-    CMP     PulseWidthCounter, AL           ;check if pulse width is equal to 
-                                            ;the PulseWidthCounter
-    JNE     UpdateCounterLoop               ;if not equal, loop to check next motor
-    ;JE     TurnMotorOn                     ;if it is equal, turn that motor on 
+    	CMP     PulseWidthCounter, AL           ;check if pulse width is equal to 
+	                                        ;the PulseWidthCounter
+    	JNE     UpdateCounterLoop               ;if not equal, loop to check next motor
+    	;JE     TurnMotorOn                     ;if it is equal, turn that motor on 
 
 TurnMotorOn:
-    PUSH    BX                              ;save motor index 
-    ADD     BL, BL                          ;multiply the index by two 
-    ADD     BL, DL                          ;add the direction 
-    MOV     CL, BYTE PTR CS:Motor_Bit_Table[BX]    ;look up which motor to turn on 
-    OR      PortBValue, CL                          ;OR the bits so we can get
-                                                    ;our final value without 
-                                                    ;changing the other bits 
-    POP     BX                              ;restore the motor index 
+    	PUSH    BX                              ;save motor index 
+    	ADD     BL, BL                          ;multiply the index by two 
+    	ADD     BL, DL                          ;add the direction 
+    	MOV     CL, BYTE PTR CS:Motor_Bit_Table[BX] ;look up which motor to turn on 
+    	OR      PortBValue, CL                  ;OR the bits so we can get
+                                                ;our final value without 
+                                                ;changing the other bits 
+    	POP     BX                              ;restore the motor index 
     
 UpdateCounterLoop:
-    INC     BX                              ;increment to check the next motor
-    CMP     BX, NUM_MOTORS                  ;have we reached the last motor?
-    JNE     GetPulseWidth                   ;if not, check the next motor 
-   ;JE      CheckLaser                      ;if so, move on to checking laser 
+    	INC     BX                              ;increment to check the next motor
+    	CMP     BX, NUM_MOTORS                  ;have we reached the last motor?
+    	JNE     GetPulseWidth                   ;if not, check the next motor 
+   	;JE      CheckLaser                      ;if so, move on to checking laser 
    
 CheckLaser:
-    CMP     LaserStatus, LASER_OFF          ;check the laser status to see if
-                                            ;it is off 
-    JE      SetLaserOff                     ;if it is, turn the laser off 
-    ;JNE    SetLaserOn                      ;if it isn't, turn the laser on 
+    	CMP     LaserStatus, LASER_OFF          ;check the laser status to see if
+                                            	;it is off 
+    	JE      SetLaserOff                     ;if it is, turn the laser off 
+    	;JNE    SetLaserOn                      ;if it isn't, turn the laser on 
 
 SetLaserOn:
-    OR      PortBValue, SET_LASER_ON        ;turn laser on 
-    JMP     OutputPortBValue 
+    	OR      PortBValue, SET_LASER_ON        ;turn laser on 
+    	JMP     OutputPortBValue 
     
 SetLaserOff:
-    AND     PortBValue, SET_LASER_OFF       ;turn laser off 
-    ;JMP    OutputPortBValue
+    	AND     PortBValue, SET_LASER_OFF       ;turn laser off 
+    	;JMP    OutputPortBValue
     
 OutputPortBValue:
-    MOV     DX, MOTOR_PORT_ADDRESS          ;output our final bits that have 
-    MOV     AL, PortBValue                  ;;been set to Port B 
-    OUT     DX, AL 
-    ;JMP    PWMEventHandlerDone
+	MOV     DX, MOTOR_PORT_ADDRESS          ;output our final bits that have 
+    	MOV     AL, PortBValue                  ;;been set to Port B 
+    	OUT     DX, AL 
+    	;JMP    PWMEventHandlerDone
     
 PWMEventHandlerDone:
-    DEC     PulseWidthCounter               ;decrement the PulseWidthCounter to
-                                            ;continue counting down 
+    	DEC     PulseWidthCounter               ;decrement the PulseWidthCounter to
+                                            	;continue counting down 
 	POPA                                    ;restore all registers 
 	RET	
 			
@@ -798,27 +791,27 @@ CODE    ENDS
 DATA    SEGMENT PUBLIC 'DATA'
 
 PulseWidths 		DB	NUM_MOTORS DUP(?) ;list of pulse widths for 
-                                          ;each motor; the pulse width
-                                          ;determines when we should turn the 
-                                          ;motor on 
-PulseWidthCounter	DB	?                 ;counter for the pulse width 
-                                          ;with a range of PW_COUNTER_END to 
-                                          ;MAX_PULSE
-MotorSpeed 		    DW	?                 ;speed of the RoboTrike; limited by 
-                                          ;MIN_SPEED and MAX_SPEED with 
-                                          ;MIN_SPEED meaning the RoboTrike is
-                                          ;stopped
-MotorAngle		    DW	?                 ;angle of the RoboTrike; limited by 
-                                          ;MIN_ANGLE and MAX_ANGLE with an angle
-                                          ;of MIN_ANGLE meaning straight ahead 
-                                          ;relative to the RoboTrike orientation 
-                                          ;and angles are measured clockwise 
-LaserStatus 		DW	?                 ;status of the laser with zero values
-                                          ;meaning the laser is off and non-zero 
-                                          ;values meaning the laser is on 
-PortBValue		    DB	?	              ;bits we need to output to Port B to 
-                                          ;set the motors on/off, forward/
-                                          ;backward and the laser on/off 
+                                          	  ;each motor; the pulse width
+                                        	  ;determines when we should turn the 
+                                          	  ;motor on 
+PulseWidthCounter	DB	?       ;counter for the pulse width 
+                                       	;with a range of PW_COUNTER_END to 
+                                       	;MAX_PULSE
+MotorSpeed 		DW	?       ;speed of the RoboTrike; limited by 
+                                       	;MIN_SPEED and MAX_SPEED with 
+                                        ;MIN_SPEED meaning the RoboTrike is
+                                        ;stopped
+MotorAngle		DW	?       ;angle of the RoboTrike; limited by 
+                                        ;MIN_ANGLE and MAX_ANGLE with an angle
+                                        ;of MIN_ANGLE meaning straight ahead 
+                                        ;relative to the RoboTrike orientation 
+                                        ;and angles are measured clockwise 
+LaserStatus 		DW	?       ;status of the laser with zero values
+                                        ;meaning the laser is off and non-zero 
+                                        ;values meaning the laser is on 
+PortBValue		DB	?	;bits we need to output to Port B to 
+                                        ;set the motors on/off, forward/
+                                        ;backward and the laser on/off 
 
 
 DATA    ENDS
