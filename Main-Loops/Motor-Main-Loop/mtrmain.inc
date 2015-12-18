@@ -20,4 +20,4 @@
 MOTOR_SYMBOL       EQU  'n'     ;used twice to simulate an m to indicate motor
 LASER_SYMBOL       EQU  'L'     ;indicate a laser status 
 DIRECTION_SYMBOL   EQU  'd'     ;indicate a direction status 
-SPEED_SYMBOL       EQU  'S'     ;indicate a speed status 
+SPEED_SYMBOL       EQU  'S'     ;indicate a speed status  
