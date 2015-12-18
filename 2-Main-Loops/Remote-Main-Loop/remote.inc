@@ -28,4 +28,5 @@ DISPLAY_BUF_LEN     	EQU DISPLAY_LEN + 1 ;number of characters that can be
                                           ;same as the DISPLAY_LEN with an 
                                           ;extra character for the null terminator 
 ERROR_SYMBOL        	EQU 'E'         ;character to display that indicates an error 
-REMOTE_SYMBOL       	EQU 'r'         ;character to display that indicates serial 
+REMOTE_SYMBOL       	EQU 'r'         ;character to display that indicates serial  
+
