@@ -27,7 +27,7 @@ SHIFT_BIT       EQU     1       ;amount of bits to shift by to get the correct
                                 ;number of bits 
 
 ; Speed Constants: 
-REST_SPEED	EQU	0       ;speed of the motor when stopped
+REST_SPEED	EQU	0           ;speed of the motor when stopped
 MIN_SPEED	EQU	REST_SPEED  ;the minimum speed of the motors, the same 
                                     ;speed as when the RoboTrike is stopped 
 MAX_SPEED	EQU	65534       ;maximum speed at which the RoboTrike can run 
