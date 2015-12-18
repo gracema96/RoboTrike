@@ -22,7 +22,7 @@
 ;
 
 ; include files:
-$INCLUDE(CS.inc) 	;incude definitions 
+$INCLUDE(CS.inc) 	
 
 
 
