@@ -15,3 +15,4 @@ link86 rmtmain.obj, eventq.obj, cs.obj, int.obj, int2.obj, timer0.obj, converts.
 link86 queue.obj, display.obj, keypad.obj, segtable.obj, serial.obj TO orary.lnk 
 link86 temp.lnk, orary.lnk TO remote.lnk
 loc86 remote.lnk TO remote NOIC AD(SM(CODE(4000h), data(400h), stack(7000h))) 
+
