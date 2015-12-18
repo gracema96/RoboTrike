@@ -671,7 +671,7 @@ DisplayNoReset:
     MOV	    ES, BX 			    ;display_buffer is in the data segment  
     MOV	    SI, OFFSET(display_buffer)	    ;set up SI with the initial start 
                                             ;address of the display_buffer 
-    CALL	Display			     ;call function Display to display 
+    CALL    Display			     ;call function Display to display 
                                             ;the contents of the display_buffer 
     MOV	    display_buffer_index, 0 	    ;we are done displaying the 
                                             ;display_buffer, so start the 
