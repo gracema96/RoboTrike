@@ -3,7 +3,7 @@
 ;                                  MTRMAIN.INC                               ;
 ;                           Include for Motor Main Loop                      ;
 ;                                   EE/CS 51                                 ;
-;                                   Yuan Ma 	                               ;
+;                                   Yuan Ma 	                             ;
 ;                                                                            ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
