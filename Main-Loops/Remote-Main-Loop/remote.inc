@@ -20,8 +20,8 @@
 
 NO_EVENT_HANDLER	EQU 0	        ;no event handler, but needed for 
                             		;properly indexing table 
-COMMAND_LEN         	EQU 8   	;length of a command 
-DISPLAY_LEN         	EQU 8   	;number of characters that can be 
+COMMAND_LEN         	EQU 8           ;length of a command 
+DISPLAY_LEN         	EQU 8           ;number of characters that can be 
                                         ;displayed on LED display 
 DISPLAY_BUF_LEN     	EQU DISPLAY_LEN + 1 ;number of characters that can be 
                                           ;stored in the display buffers
