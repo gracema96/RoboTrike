@@ -192,60 +192,61 @@ MAIN:
 	MOV	DS, AX 
 
 	CALL	InitCS			    ;initialize the 80188 chip selects
-                                	;assume LCS and UCS already set up 
-	CALL	ClrIRQVectors		;clear (initialize) interrupt vector table 
-	CALL	ResetRemoteMain		;call function to initialize the rest of 
-                                ;the necessary functions 
+                                	    ;assume LCS and UCS already set up 
+	CALL	ClrIRQVectors		    ;clear (initialize) interrupt vector table 
+	CALL	ResetRemoteMain		    ;call function to initialize the rest of 
+                                	    ;the necessary functions 
 	;JMP	RemoteMainLoop
 
 RemoteMainLoop:
-	CALL	GetCriticalError	;obtain the critical error value in AX 
-	CMP	    AX, RESET_FLAG  	;check to see if there is a critical error 
-	JE	    RemoteHandleEvents 	;if there is no critical error, we can move
-                                ;on to dequeueing an event from the EventQueue
-	;JNE	HandleCriticalError	;if there is a critical error, handle it 
+	CALL	GetCriticalError	    ;obtain the critical error value in AX 
+	CMP	AX, RESET_FLAG  	    ;check to see if there is a critical error 
+	JE	RemoteHandleEvents 	    ;if there is no critical error, we can move
+                                	    ;on to dequeueing an event from the EventQueue
+	;JNE	HandleCriticalError	    ;if there is a critical error, handle it 
 
 HandleCriticalError:
-	CALL	ResetRemoteMain		;call function ResetRemoteMain to reset the 
-                                ;main loop since there was a critical error
-                                ;this resets the event queue 
-	JMP	    RemoteMainLoop		;start looping again 
+	CALL	ResetRemoteMain		    ;call function ResetRemoteMain to reset the 
+                                	    ;main loop since there was a critical error
+                                	    ;this resets the event queue 
+	JMP	RemoteMainLoop	            ;start looping again 
 
 RemoteHandleEvents: 
-	CALL	EventQueueEmpty		;call function EventQueueEmpty to check 
-                                ;if EventQueue is empty
-	JZ	    RemoteMainLoop		;if the zero flag is set, this means the 
-                                ;EventQueue is empty and there are no events
-                                ;to dequeue 
-	CALL	DequeueEvent		;call function DequeueEvent to dequeue an 
-                                ;event from the EventQueue 
-	;JMP	CheckRemoteEventType 	;check what type of event it is 
+	CALL	EventQueueEmpty		    ;call function EventQueueEmpty to check 
+                                	    ;if EventQueue is empty
+	JZ	RemoteMainLoop		    ;if the zero flag is set, this means the 
+                                	    ;EventQueue is empty and there are no events
+                                	    ;to dequeue 
+	CALL	DequeueEvent		    ;call function DequeueEvent to dequeue an 
+                                   	    ;event from the EventQueue 
+	;JMP	CheckRemoteEventType 	    ;check what type of event it is 
 
 CheckRemoteEventType:
-	XOR	    BX, BX			    ;clear BX just in case there was anything there 
-	MOV	    BL, AH 			    ;move event value to BL for table indexing 
-                                ;later 
-                                ;now check if we have a valid event
-	CMP	    BL, KEY_EVENT 	    ;check if we have a valid keypress event 	
-	JE	    HandleRemoteEvent   ;if so, we will handle it 
+	XOR	BX, BX			    ;clear BX just in case there was anything there 
+	MOV	BL, AH 			    ;move event value to BL for table indexing 
+                                	    ;later 
+                                	    
+                                	    ;now check if we have a valid event
+	CMP	BL, KEY_EVENT 	            ;check if we have a valid keypress event 	
+	JE	HandleRemoteEvent   	    ;if so, we will handle it 
 
-	CMP	    BL, RX_EVENT 	    ;check if we have a valid data received from 
-                                ;serial event
-    JE	    HandleRemoteEvent   ;if so, we will handle it 
+	CMP	BL, RX_EVENT 	    	    ;check if we have a valid data received from 
+                                	    ;serial event
+        JE	HandleRemoteEvent   	    ;if so, we will handle it 
 	
-	CMP	    BL, ERROR_EVENT 	;check if we have a valid serial error event 
-	JE	    HandleRemoteEvent   ;if so, we will handle it 
+	CMP	BL, ERROR_EVENT 	    ;check if we have a valid serial error event 
+	JE	HandleRemoteEvent   	    ;if so, we will handle it 
 
-	JNE	    RemoteMainLoop		;if we don’t have a valid event, loop back
+	JNE	RemoteMainLoop		    ;if we don’t have a valid event, loop back
 
 HandleRemoteEvent:
-	SHL	    BX, TABLE_WORD_INDEXED          ;remote event handler table is
+	SHL	BX, TABLE_WORD_INDEXED      ;remote event handler table is
                                             ;indexed as words so we must 
                                             ;shift BX 
 	CALL 	CS:RemoteEventHandlerTable[BX]  ;call the proper function as 
                                             ;indexed in the table to 
                                             ;handle the event appropriately 
-	JMP	    RemoteMainLoop		            ;finished handling the event, so 
+	JMP	RemoteMainLoop		    ;finished handling the event, so 
                                             ;loop back 
 	 
 
@@ -257,7 +258,7 @@ HandleRemoteEvent:
 ;               There are functions to handle keypress events, receiving 
 ;               data from serial events, and serial error events. 
 ; 
-; Notes:	    READ ONLY tables should always be in the code segment 
+; Notes:	READ ONLY tables should always be in the code segment 
 ;               so that in a standalone system it will be located in 
 ;               the ROM with the code.
 ;
@@ -265,34 +266,34 @@ HandleRemoteEvent:
 ; Last Modified: 12/6/15
 
 RemoteEventHandlerTable	LABEL	WORD
-	DW	NO_EVENT_HANDLER	            ;no event handler, but used for 
+	DW	NO_EVENT_HANDLER	;no event handler, but used for 
                                         ;table indexing 
-	DW	KeypressHandler		            ;handle keypress event (KEY_EVENT) 
-	DW	ReceiveSerialDataHandler        ;handle receive data from serial event 
-                                        ;(RX_EVENT) 
-	DW	SerialErrorHandler              ;handle serial error event (ERROR_EVENT) 
+	DW	KeypressHandler		;handle keypress event (KEY_EVENT) 
+	DW	ReceiveSerialDataHandler    ;handle receive data from serial event 
+                                            ;(RX_EVENT) 
+	DW	SerialErrorHandler      ;handle serial error event (ERROR_EVENT) 
 
 
 ; ResetRemoteMain 
 ;
-; Description:		This function just resets components of the RoboTrike  
-;			        remote board in order to initialize them. The function will
-;                   initialize timer0, interrupts, the display, the display
-;                   muxing, the keypad, the serial, the eventqueue, the
-;                   critical error flag, the display_buffer_index, and the 
-;                   display_error flag. This function is also called in the 
-;                   case of a critical error. Interrupts are turned off while 
-;                   resetting.  	
+; Description:          This function just resets components of the RoboTrike  
+;		        remote board in order to initialize them. The function will
+;                       initialize timer0, interrupts, the display, the display
+;                       muxing, the keypad, the serial, the eventqueue, the
+;                       critical error flag, the display_buffer_index, and the 
+;                       display_error flag. This function is also called in the 
+;                       case of a critical error. Interrupts are turned off while 
+;                       resetting.  	
 ;
-; Operation:		The function will first turn interrupts off while 
-;                   initializing functions. Then if will calls the the 
-;                   functions necessary to initialize timer0, int2, 
-;                   install appropriate handlers, display, display
-;                   muxing, keypad, serial, EventQueue, and critical error flag. 
-;                   It will also set the display_buffer_index to 0 to 
-;                   represent the first character and indicate that there 
-;                   are no errors being displayed. Finally interrupts are 
-;                   renabled at the end. 
+; Operation:	        The function will first turn interrupts off while 
+;                       initializing functions. Then if will calls the the 
+;                       functions necessary to initialize timer0, int2, 
+;                       install appropriate handlers, display, display
+;                       muxing, keypad, serial, EventQueue, and critical error flag. 
+;                       It will also set the display_buffer_index to 0 to 
+;                       represent the first character and indicate that there 
+;                       are no errors being displayed. Finally interrupts are 
+;                       renabled at the end. 
 ;
 ; Arguments:		None 
 ;
@@ -301,13 +302,13 @@ RemoteEventHandlerTable	LABEL	WORD
 ; Local Variables:	None
 ;
 ; Shared Variables:	Shared variables associated with each initialization function
-;			        described in that function’s functional specification  
+;			described in that function’s functional specification  
 ;
 ; Global Variables:	None 
 ;
-; Input:		    None
+; Input:		None
 ;
-; Output:		    None
+; Output:		None
 ;
 ; Error Handling:	None 
 ;
@@ -315,8 +316,8 @@ RemoteEventHandlerTable	LABEL	WORD
 ;
 ; Data Structures: 	None 
 ;
-; Registers Changed: Registers changed associated with each initialization 
-;                   function described in that function’s functional specification 
+; Registers Changed:   Registers changed associated with each initialization 
+;                      function described in that function’s functional specification 
 ;
 ; Limitations:		None  	
 ;
@@ -327,66 +328,66 @@ RemoteEventHandlerTable	LABEL	WORD
 ResetRemoteMain      	PROC        NEAR
 
     CLI                             ;turns interrupts off while initializing  	
-    CALL	InitTimer0 		        ;initialize the keypad and display timer
+    CALL    InitTimer0 		    ;initialize the keypad and display timer
                                     ;and allow interrupts 	
-	CALL	InstallTimer0Handler	;install the timer 0 event handler. Must 
+    CALL    InstallTimer0Handler    ;install the timer 0 event handler. Must 
                                     ;install handlers before allowing the 
                                     ;hardware to interrupt 
-	CALL	InitINT2		        ;initialize the INT2 interrupts 
-	CALL	InstallINT2Handler 	    ;install the INT2 event handler. Must install
+    CALL    InitINT2		    ;initialize the INT2 interrupts 
+    CALL    InstallINT2Handler 	    ;install the INT2 event handler. Must install
                                     ;handlers before allowing the hardware to 
                                     ;interrupt 
-    CALL 	InitDisplay			    ;initializes the display 
-    CALL	KeypadScanInit			;initializes the keypad    
-    CALL	InitSerial			    ;initializes the serial I/O
-	CALL	InitEventQueue			;initializes the event queue 
-	CALL	InitCriticalError		;initialize critical error flag  
-	MOV	    display_buffer_index, 0 ;start display string index to first
+    CALL    InitDisplay		    ;initializes the display 
+    CALL    KeypadScanInit	    ;initializes the keypad    
+    CALL    InitSerial		    ;initializes the serial I/O
+    CALL    InitEventQueue	    ;initializes the event queue 
+    CALL    InitCriticalError	    ;initialize critical error flag  
+    MOV	    display_buffer_index, 0 ;start display string index to first
                                     ;character of display buffer 
     MOV     display_error, RESET_FLAG   ;initially not displaying any errors 
     STI                             ;enable the interrupts 
-	RET				
+    RET				
 
 ResetRemoteMain		ENDP
 
 ; KeypressHandler 
 ;
 ; Description:		This function will handle the keypress events and 
-;			        determine the appropriate command associated with each key
-;			        and then indirecty transmit the command string over the 
-;                   serial channel. Multiple keys pressed at one time will 
-;                   not be handled. Commands corresponding to each key will 
-;                   be defined in the KeypressCommandTable. This function is 
-;                   called whenever a key event is dequeued in AH from the 
-;                   EventQueue.  
+;			determine the appropriate command associated with each key
+;			and then indirecty transmit the command string over the 
+;                       serial channel. Multiple keys pressed at one time will 
+;                       not be handled. Commands corresponding to each key will 
+;                       be defined in the KeypressCommandTable. This function is 
+;                       called whenever a key event is dequeued in AH from the 
+;                       EventQueue.  
 ;
 ; Operation:		The function will calculate the index for each key by 
-;                   multiplying the event value by COMMAND_LEN. The function 
-;                   will find the appropriate command for each keypress 
-;                   using table lookup. The function will then check to see
-;                   if an error is being displayed. If so, the function will
-;                   return and nothing will be transmitted over the serial 
-;                   channel. If an error is not being displayed, the function
-;                   SerialPutString will be called to store the command 
-;                   function to TxQueue which will then transmit the command 
-;                   over the serial channel. 
+;                       multiplying the event value by COMMAND_LEN. The function 
+;                       will find the appropriate command for each keypress 
+;                       using table lookup. The function will then check to see
+;                       if an error is being displayed. If so, the function will
+;                       return and nothing will be transmitted over the serial 
+;                       channel. If an error is not being displayed, the function
+;                       SerialPutString will be called to store the command 
+;                       function to TxQueue which will then transmit the command 
+;                       over the serial channel. 
 ;
 ; Arguments:		AL - key value of the keypress to handle 
-;                        key values were previously defined in the keypad file 
+;                       key values were previously defined in the keypad file 
 ;
 ; Return Value:		None 
 ;
 ; Local Variables:	None
 ;
 ; Shared Variables:	display_error - nonzero value indicates an error is being
-;                                   displayed, a zero value indicates no error
-;                                   is being displayed (read from) 
+;                                       displayed, a zero value indicates no error
+;                                       is being displayed (read from) 
 ;
 ; Global Variables:	None 
 ;
-; Input:		    A 4x4 keypad array 
+; Input:		A 4x4 keypad array 
 ;
-; Output:		    Command message to the serial channel 
+; Output:		Command message to the serial channel 
 ;
 ; Error Handling:	None 
 ;
@@ -406,7 +407,7 @@ ResetRemoteMain		ENDP
 KeypressHandler      	PROC        NEAR
 
 
-	PUSHA				                ;save registers 
+    PUSHA				;save registers 
     
 CheckDisplayError: 
     CMP     display_error, SET_FLAG     ;check to see if display_error 
@@ -418,70 +419,70 @@ CheckDisplayError:
                                         ;address of the command to output 
                                             
 GetKeypressTableAddress: 
-	MOV	    AH, 0 			        ;we now only care about the key value
-                                    ;since we have already correctly determined
-                                    ;this as a key event not  
-    MOV     BH, 0                   ;clear BH in case there is a value there 
-	MOV	    BL, COMMAND_LEN 	    ;set up BL with the COMMAND_LEN so that 
-	MUL	    BX			            ;when multiplied by the key value, we will 
-                                    ;obtain the appropriate index of the 
-                                    ;corresponding key 
-	MOV	    BX, CS                  ;must set ES = CS since the 
-	MOV	    ES, BX			        ;KeypressCommandTable is in the code segment 
-	MOV	    SI, OFFSET(KeypressCommandTable) ;set up SI with the starting 
+    MOV	    AH, 0 			;we now only care about the key value
+                                        ;since we have already correctly determined
+                                        ;this as a key event not  
+    MOV     BH, 0                       ;clear BH in case there is a value there 
+    MOV	    BL, COMMAND_LEN 	        ;set up BL with the COMMAND_LEN so that 
+    MUL	    BX			        ;when multiplied by the key value, we will 
+                                        ;obtain the appropriate index of the 
+                                        ;corresponding key 
+    MOV	    BX, CS                      ;must set ES = CS since the 
+    MOV	    ES, BX			 ;KeypressCommandTable is in the code segment 
+    MOV	    SI, OFFSET(KeypressCommandTable) ;set up SI with the starting 
                                              ;address of the KeypressCommandTable
-	ADD	    SI, AX                  ;add the index to the start address of the 
-                                    ;KeyCommandTable so we get the index of 
-                                    ;the corresponding key command 
-    ;JMP    SendKeypressOverSerial  ;we can now send the command over the
-                                    ;serial channel 
+    ADD	    SI, AX                      ;add the index to the start address of the 
+                                        ;KeyCommandTable so we get the index of 
+                                        ;the corresponding key command 
+    ;JMP    SendKeypressOverSerial      ;we can now send the command over the
+                                        ;serial channel 
     
 SendKeypressOverSerial: 
-	CALL	SerialPutString		    ;call function SerialPutString to store 
-                                    ;the command in the TxQueue which will 
-                                    ;be transmitted over the serial channel 
-    ;JMP    KeypressHandlerEnd      ;done handling the keypress 
+    CALL    SerialPutString		;call function SerialPutString to store 
+                                        ;the command in the TxQueue which will 
+                                        ;be transmitted over the serial channel 
+    ;JMP    KeypressHandlerEnd          ;done handling the keypress 
     
 KeypressHandlerEnd: 
-	POPA				            ;restore registers 	
-	RET				
+    POPA				;restore registers 	
+    RET				
 
 KeypressHandler 	ENDP
 
 
 ; KeypressCommandTable
 ;
-; Description: 	This table gives the command corresponding to each key. 
-;               The commands are all COMMAND_LEN long with a null terminator. 
-;               Blank strings are used as place holders, so the key values 
-;               can be properly indexed in the table. 
-;		        The keypad is arranged with the key values like so: 
-;		        0E	0d	0b	07
-;		        1E	1d	1b	17
-;		        2E	2d	2b	27
-;		        3E	3d	3b	37
+; Description: 	    This table gives the command corresponding to each key. 
+;                   The commands are all COMMAND_LEN long with a null terminator. 
+;                   Blank strings are used as place holders, so the key values 
+;                   can be properly indexed in the table. 
+;		    The keypad is arranged with the key values like so: 
+;		    0E	0d	0b	07
+;		    1E	1d	1b	17
+;		    2E	2d	2b	27
+;		    3E	3d	3b	37
 ;
-;		        Corresponding commands for each key: 
-;		        0E - turn 135 degrees left    
-;		        0d - turn 135 degrees right   
-;		        0b - fourth speed    
-;		        07 - half speed   
-;		        1E - turn 45 degrees left 
-;		        1d - turn 45 degrees right 
-;		        1b - fire laser 
-;		        17 - laser off 
-;		        2E - turn 10 degrees left 
-;		        2d - turn 10 degrees right 
-;		        2b - accelerate speed 500
-;		        27 - decelerate speed 500 
-;		        3E - turn left 
-;		        3d - turn right 
-;		        3b - reverse robotrike 
-;		        37 - stop robotrike
+;		    Corresponding commands for each key: 
+;		    0E - turn 135 degrees left    
+;		    0d - turn 135 degrees right   
+;		    0b - fourth speed    
+;		    07 - half speed   
+;	 	    1E - turn 45 degrees left 
+;		    1d - turn 45 degrees right 
+;		    1b - fire laser 
+;	            17 - laser off 
+;		    2E - turn 10 degrees left 
+;		    2d - turn 10 degrees right 
+;		    2b - accelerate speed 500
+;		    27 - decelerate speed 500 
+;		    3E - turn left 
+;		    3d - turn right 
+;		    3b - reverse robotrike 
+;		    37 - stop robotrike
 ; 
 ; Notes:	    READ ONLY tables should always be in the code segment so 
-;               that in a standalone system it will be located in the 
-;               ROM with the code. 
+;                   that in a standalone system it will be located in the 
+;                   ROM with the code. 
 ; 
 ; Author: Yuan Ma
 ; Last Modified: 12/6/15 
@@ -501,7 +502,7 @@ KeypressCommandTable 	LABEL	BYTE
 	DB '       ', ASCII_NULL	;10
 	DB 'S16384 ', ASCII_NULL 	;11 fourth speed 
 	DB '       ', ASCII_NULL	;12
-	DB 'd-135  ', ASCII_NULL    ;13 turn 135 right 
+	DB 'd-135  ', ASCII_NULL        ;13 turn 135 right 
 	DB 'd+135  ', ASCII_NULL 	;14 turn 135 left 	
 	DB '       ', ASCII_NULL	;15
 	DB '       ', ASCII_NULL	;16
@@ -511,7 +512,7 @@ KeypressCommandTable 	LABEL	BYTE
 	DB '       ', ASCII_NULL	;20
 	DB '       ', ASCII_NULL	;21
 	DB '       ', ASCII_NULL	;22
-	DB 'O      ', ASCII_NULL    ;23	turn laser off 
+	DB 'O      ', ASCII_NULL        ;23	turn laser off 
 	DB '       ', ASCII_NULL	;24
 	DB '       ', ASCII_NULL	;25
 	DB '       ', ASCII_NULL	;26
@@ -557,33 +558,33 @@ KeypressCommandTable 	LABEL	BYTE
 ; ReceiveSerialDataHandler   
 ;
 ; Description:		This function handles any serial data that is received
-;                   and will display the data on the LED displays. Serial data
-;                   is recognized as a string up to DISPLAY_LEN long followed 
-;                   by a carriage return. The data from th serial channel is 
-;                   processed one character at a time and stored in a 
-;                   temporary display_buffer. If an error is being displayed,
-;                   the display will reset the appropriate shared variables. 
-;                   This function is called whenever a serial data received
-;                   event is dequeued in AH from the EventQueue. Long strings 
-;                   are truncated and will only display up to DISPLAY_LEN. 
+;                       and will display the data on the LED displays. Serial data
+;                       is recognized as a string up to DISPLAY_LEN long followed 
+;                       by a carriage return. The data from th serial channel is 
+;                       processed one character at a time and stored in a 
+;                       temporary display_buffer. If an error is being displayed,
+;                       the display will reset the appropriate shared variables. 
+;                       This function is called whenever a serial data received
+;                       event is dequeued in AH from the EventQueue. Long strings 
+;                       are truncated and will only display up to DISPLAY_LEN. 
 ;
 ; Operation:		The function will check to see if a carriage return has
-;                   been sent over the serial channel. If so, the function will
-;                   display the string that is stored in the display_buffer. 
-;                   If not, the function will loop and store characters in the 
-;                   display_buffer and check to make sure there aren't more 
-;                   characters than DISPLAY_BUF_LEN. If there are more 
-;                   characters than DISPLAY_BUF_LEN, the index will 
-;                   automatically be set to the last display character. Before 
-;                   the display_buffer can be displayed, we must check to 
-;                   make sure we are not displaying an error. If we are, we 
-;                   will reset the display_buffer_index to the first character
-;                   and reset the display_error flag. If we are not displaying
-;                   an error, then we will set the null terminator as the 
-;                   last character of display_buffer and then call Display to 
-;                   display the final display_buffer. After displaying the 
-;                   display_buffer, the display_buffer_index is then reset to 
-;                   the beginning again. 
+;                       been sent over the serial channel. If so, the function will
+;                       display the string that is stored in the display_buffer. 
+;                       If not, the function will loop and store characters in the 
+;                       display_buffer and check to make sure there aren't more 
+;                       characters than DISPLAY_BUF_LEN. If there are more 
+;                       characters than DISPLAY_BUF_LEN, the index will 
+;                       automatically be set to the last display character. Before 
+;                       the display_buffer can be displayed, we must check to 
+;                       make sure we are not displaying an error. If we are, we 
+;                       will reset the display_buffer_index to the first character
+;                       and reset the display_error flag. If we are not displaying
+;                       an error, then we will set the null terminator as the 
+;                       last character of display_buffer and then call Display to 
+;                       display the final display_buffer. After displaying the 
+;                       display_buffer, the display_buffer_index is then reset to 
+;                       the beginning again. 
 ;
 ; Arguments:		AL - character received over the serial channel 
 ;
@@ -592,18 +593,18 @@ KeypressCommandTable 	LABEL	BYTE
 ; Local Variables:	None
 ;
 ; Shared Variables:	display_buffer - buffer to store characters that will 
-;					                 eventually be displayed (written to)
-;                   display_buffer_index - index of characters in the 
-;                                           display_buffer (written/read)
-;                   display_error - nonzero value indicates an error is being
-;                                   displayed, a zero value indicates no error
-;                                   is being displayed (written/read)
+;					 eventually be displayed (written to)
+;                       display_buffer_index - index of characters in the 
+;                                               display_buffer (written/read)
+;                       display_error - nonzero value indicates an error is being
+;                                       displayed, a zero value indicates no error
+;                                       is being displayed (written/read)
 ;
 ; Global Variables:	None 
 ;
-; Input:		    Data from the serial channel 
+; Input:		Data from the serial channel 
 ;
-; Output:		    LED displays 
+; Output:		LED displays 
 ;
 ; Error Handling:	None 
 ;
@@ -611,10 +612,10 @@ KeypressCommandTable 	LABEL	BYTE
 ;
 ; Data Structures: 	None 
 ;
-; Registers Changed: None  
+; Registers Changed:    None  
 ;
 ; Limitations:		The string to be displayed can only be up to COMMAND_LEN 
-;                   long. 
+;                       long. 
 ;
 ; Author: Yuan Ma 
 ; Last Modified: 12/6/15
@@ -622,32 +623,32 @@ KeypressCommandTable 	LABEL	BYTE
 
 ReceiveSerialDataHandler    	PROC        NEAR
 
-	PUSHA			                        ;save registers
+	PUSHA			             ;save registers
 
 CheckEOSChar:
-	CMP	    AL, ASCII_EOS 		            ;check to see if character we 
-                                            ;received is carriage return 
-	JE	    DisplaySerialData               ;if so, we can display what we have
-                                            ;in the display_buffer 
-	;JNE	StoreNextChar	                ;if not, we will store the next 
-                                            ;character to display 
+    CMP	    AL, ASCII_EOS 		     ;check to see if character we 
+                                             ;received is carriage return 
+    JE	    DisplaySerialData                ;if so, we can display what we have
+                                             ;in the display_buffer 
+    ;JNE    StoreNextChar	             ;if not, we will store the next 
+                                             ;character to display 
 
 StoreNextChar:
-	MOV	    BX, display_buffer_index	    ;get current display buffer index
-	MOV	    display_buffer[BX], AL		    ;save the character to the current
-                                            ;index of the display_buffer 
-	INC	    display_buffer_index		    ;increment to store the next character
-	CMP	    display_buffer_index, DISPLAY_BUF_LEN	;check to make sure we don't
+    MOV	    BX, display_buffer_index	     ;get current display buffer index
+    MOV	    display_buffer[BX], AL           ;save the character to the current
+                                             ;index of the display_buffer 
+    INC	    display_buffer_index		    ;increment to store the next character
+    CMP	    display_buffer_index, DISPLAY_BUF_LEN   ;check to make sure we don't
                                                     ;have more characters than 
                                                     ;we can display 
-	JL	    ReceiveDataDone 		        ;if so, we are done storing this 
+    JL	    ReceiveDataDone 		    ;if so, we are done storing this 
                                             ;character 
-	;JNB	SetDisplayLastChar		        ;if not, we have to set index to 
+    ;JNB    SetDisplayLastChar		    ;if not, we have to set index to 
                                             ;the last character
 
 SetDisplayLastChar:
-	MOV	    display_buffer_index, DISPLAY_LEN 	;set index to last display character
-	JMP	    ReceiveDataDone                     ;now we are done 
+    MOV	    display_buffer_index, DISPLAY_LEN 	;set index to last display character
+    JMP	    ReceiveDataDone                     ;now we are done 
 
 DisplaySerialData:                          ;ready to display serial data 
     CMP     display_error, SET_FLAG         ;but must first check if we are 
@@ -663,24 +664,24 @@ DisplayReset:
     ;JMP    DisplayNoReset
 
 DisplayNoReset: 
-	MOV	    BX, display_buffer_index        ;get the current display_buffer_index
-	MOV	    display_buffer[BX], ASCII_NULL  ;send null terminator to display_buffer
+    MOV	    BX, display_buffer_index        ;get the current display_buffer_index
+    MOV	    display_buffer[BX], ASCII_NULL  ;send null terminator to display_buffer
                                             ;to indicate the end of the string 
-	MOV	    BX, DS                          ;set ES = DS since the 
-	MOV	    ES, BX 				            ;display_buffer is in the data segment  
-	MOV	    SI, OFFSET(display_buffer)	    ;set up SI with the initial start 
+    MOV	    BX, DS                          ;set ES = DS since the 
+    MOV	    ES, BX 			    ;display_buffer is in the data segment  
+    MOV	    SI, OFFSET(display_buffer)	    ;set up SI with the initial start 
                                             ;address of the display_buffer 
-	CALL	Display				            ;call function Display to display 
+    CALL	Display			     ;call function Display to display 
                                             ;the contents of the display_buffer 
-	MOV	    display_buffer_index, 0 	    ;we are done displaying the 
+    MOV	    display_buffer_index, 0 	    ;we are done displaying the 
                                             ;display_buffer, so start the 
                                             ;display_buffer_index at the 
                                             ;beginning again for next time 
     ;JMP    ReceiveDataDone
 
 ReceiveDataDone:
-	POPA			                        ;restore registers 		
-	RET				
+    POPA			            ;restore registers 		
+    RET				
 
 ReceiveSerialDataHandler	ENDP
 
@@ -688,30 +689,30 @@ ReceiveSerialDataHandler	ENDP
 ; SerialErrorHandler 
 ;
 ; Description:		This function will handle serial error events by 
-;                   displaying an error string if there are serial error events
-;                   and doesn't allow other data to be sent over. The error 
-;                   string is determined by the LSR value with the possible 
-;                   errors being: parity errror, ovrrrun error, framing
-;                   error, and baud rate error. This function is 
-;                   called whenever a serial error event is dequeued in AH 
-;                   from the EventQueue.   		
+;                       displaying an error string if there are serial error events
+;                       and doesn't allow other data to be sent over. The error 
+;                       string is determined by the LSR value with the possible 
+;                       errors being: parity errror, ovrrrun error, framing
+;                       error, and baud rate error. This function is 
+;                       called whenever a serial error event is dequeued in AH 
+;                       from the EventQueue.   		
 ;
 ; Operation:		This function will first set up the first character of 
-;                   the display_error_buffer as ERROR_SYMBOL to indicate an 
-;                   error message. Next, the function will clear the serial 
-;                   error event, since we only care about the serial error 
-;                   value now. The function will set up SI as the address of the 
-;                   display_error_buffer after the ERROR_SYMBOL was written 
-;                   and call function Hex2String to write the LSR value as an 
-;                   ASCII string to the display_error_buffer after the 
-;                   ERROR_SYMBOL. Hex2String will ensure the the string is 
-;                   within the appropriate display bounds and will null 
-;                   terminate the string. Finally, the function Display will be
-;                   called with SI set up as the start address of the 
-;                   display_error_buffer to display the entire error message. 
-;                   The display_error flag will be set to indicate that an
-;                   error is currently being displayed so other serial data 
-;                   can't be sent. 
+;                       the display_error_buffer as ERROR_SYMBOL to indicate an 
+;                       error message. Next, the function will clear the serial 
+;                       error event, since we only care about the serial error 
+;                       value now. The function will set up SI as the address of the 
+;                       display_error_buffer after the ERROR_SYMBOL was written 
+;                       and call function Hex2String to write the LSR value as an 
+;                       ASCII string to the display_error_buffer after the 
+;                       ERROR_SYMBOL. Hex2String will ensure the the string is 
+;                       within the appropriate display bounds and will null 
+;                       terminate the string. Finally, the function Display will be
+;                       called with SI set up as the start address of the 
+;                       display_error_buffer to display the entire error message. 
+;                       The display_error flag will be set to indicate that an
+;                       error is currently being displayed so other serial data 
+;                       can't be sent. 
 ;
 ; Arguments:		AL - LSR value of the serial error  
 ;
@@ -720,16 +721,16 @@ ReceiveSerialDataHandler	ENDP
 ; Local Variables:	None
 ;
 ; Shared Variables:	display_error - nonzero value indicates an error is being
-;                                   displayed, a zero value indicates no error
-;                                   is being displayed (written to)
-;                   display_error_buffer - buffer to store the error message 
-;                                           (written to)
+;                                       displayed, a zero value indicates no error
+;                                       is being displayed (written to)
+;                       display_error_buffer - buffer to store the error message 
+;                                              (written to)
 ;
 ; Global Variables:	None 
 ;
-; Input:		    None
+; Input:		None
 ;
-; Output:		    None
+; Output:		None
 ;
 ; Error Handling:	None  
 ;
@@ -737,11 +738,11 @@ ReceiveSerialDataHandler	ENDP
 ;
 ; Data Structures: 	None 
 ;
-; Registers Changed: None 
+; Registers Changed:    None 
 ;
 ; Limitations:		The function can only display the error message of the 
-;                   first error that occurs. In this case, 'E00008' will be 
-;                   displayed.   	
+;                       first error that occurs. In this case, 'E00008' will be 
+;                       displayed.   	
 ;
 ; Author: Yuan Ma 
 ; Last Modified: 12/6/15 
@@ -749,7 +750,7 @@ ReceiveSerialDataHandler	ENDP
 
 SerialErrorHandler      PROC        NEAR
 
-	PUSHA				                        ;save registers
+    PUSHA				         ;save registers
     MOV     display_error_buffer[0], REMOTE_SYMBOL  ;write the ERROR_SYMBOL as the 
                                                 ;first character of the 
                                                 ;display_error_buffer to 
@@ -761,25 +762,25 @@ SerialErrorHandler      PROC        NEAR
                                                 ;this as a serial error event 
     MOV     SI, OFFSET(display_error_buffer+2)    ;set up SI with the start 
                                                 ;address of the display_error_buffer
-    ;INC     SI                                  ;increment to the next character
+    ;INC    SI                                  ;increment to the next character
                                                 ;since we wrote ERROR_SYMBOL
                                                 ;as the first symbol 
     CALL    Hex2String                          ;call function Hex2String to 
                                                 ;write the error value as the 
                                                 ;error message after ERROR_SYMBOL
-	MOV	    CX, DS                              ;set up ES = DS since the 
-	MOV	    ES, CX			                    ;display_error_buffer is in the 
+    MOV	    CX, DS                              ;set up ES = DS since the 
+    MOV	    ES, CX			        ;display_error_buffer is in the 
                                                 ;data segment 
-	MOV	    SI, OFFSET(display_error_buffer)    ;set up SI with the start 
+    MOV	    SI, OFFSET(display_error_buffer)    ;set up SI with the start 
                                                 ;address of the display_error_buffer
-	CALL	Display 		                    ;call function Display to 
+    CALL    Display 		                ;call function Display to 
                                                 ;display the error string from
                                                 ;the beginning 
     MOV     display_error, SET_FLAG             ;set the display_error flag 
                                                 ;to indicate we are displaying 
                                                 ;an error 
-	POPA				                        ;restore registers
-	RET				
+    POPA				        ;restore registers
+    RET				
 
 SerialErrorHandler	ENDP
 
@@ -793,9 +794,9 @@ CODE    ENDS
 
 DATA    SEGMENT PUBLIC 'DATA'
 
-display_buffer_index	DW	?                       ;index of characters in the 
+display_buffer_index	DW	?                   ;index of characters in the 
                                                     ;display_buffer 
-display_buffer		    DB	DISPLAY_BUF_LEN DUP(?)  ;buffer to store characters 
+display_buffer		DB	DISPLAY_BUF_LEN DUP(?)  ;buffer to store characters 
                                                     ;that will displayed 
                                                     ;on the LED displays 
 display_error           DW  ?                       ;nonzero value indicates 
@@ -823,3 +824,4 @@ STACK 	ENDS
 
 
 	END	START  
+
