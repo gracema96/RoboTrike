@@ -13,7 +13,7 @@
 2.  Main Loops 
     a. Remote Main Loop
         - rmtmain.asm
-        - rmtmain.inc 
+        - remote.inc 
     b. Motor Main Loop 
         - mtrmain.asm
         - mtrmain.inc 
