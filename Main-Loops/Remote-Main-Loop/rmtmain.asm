@@ -794,17 +794,17 @@ CODE    ENDS
 
 DATA    SEGMENT PUBLIC 'DATA'
 
-display_buffer_index	DW	?                   ;index of characters in the 
+display_buffer_index	DW ?                        ;index of characters in the 
                                                     ;display_buffer 
-display_buffer		DB	DISPLAY_BUF_LEN DUP(?)  ;buffer to store characters 
+display_buffer		DB DISPLAY_BUF_LEN DUP(?)   ;buffer to store characters 
                                                     ;that will displayed 
                                                     ;on the LED displays 
-display_error           DW  ?                       ;nonzero value indicates 
+display_error           DW ?                        ;nonzero value indicates 
                                                     ;an error is being
                                                     ;displayed, a zero value 
                                                     ;indicates no error
                                                     ;is being displayed      
-display_error_buffer    DB  DISPLAY_BUF_LEN DUP(?)  ;buffer to store the 
+display_error_buffer    DB DISPLAY_BUF_LEN DUP(?)   ;buffer to store the 
                                                     ;error message that will 
                                                     ;be displayed on the LED 
                                                     ;displays 
